@@ -9,9 +9,28 @@ let splitString data =
     data
     |> Seq.map (fun s -> s.ToCharArray())
 
-let filter readings =
-    readings
-    |> Seq.countBy (fun el -> el |> Seq.head )
+let getFlagCounts level readings =
+    let binCounts =
+        readings
+        |> Seq.countBy (fun el -> el |> Seq.skip level |> Seq.head )
+    binCounts
+
+let getMaxCount counts =
+    counts
+    |> Seq.maxBy (fun el -> snd el)
+    |> fst
+
+let rec getOxyGen level (readings : char[] seq) =
+    let filterKey =
+        readings |> getFlagCounts level |> getMaxCount
+
+    let levelReadings =
+        readings
+        |> Seq.filter (fun reading -> reading[level] = filterKey)
+
+    match levelReadings with
+    | [] | h::[] -> levelReadings
+    | _ -> getOxyGen (level + 1) readings
 
 let calcResult data =
     let dataWidth = (data |> Seq.head |> String.length) - 1
@@ -52,7 +71,13 @@ let calcResult data =
     "01010"
 ]
 |> splitString
-|> filter
+|> getOxyGen 0
+
+
+|> getFlagCounts
+|> getMaxCount
+
+
 
 |> calcResult
 |> fun (_, l, r) -> l * r
